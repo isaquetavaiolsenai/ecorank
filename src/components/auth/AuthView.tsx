@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/AppButton";
+import { Button } from "@/components/ui/EcoBaseButton.tsx";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 

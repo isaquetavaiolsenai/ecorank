@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { Award, ChevronRight, Trophy, Lightbulb, CheckCircle2, TrendingUp, RefreshCcw, Share2, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/AppButton";
+import { Button } from "@/components/ui/EcoBaseButton.tsx";
 import Markdown from "react-markdown";
 import { Category } from "../../types";
 import { useState } from "react";
