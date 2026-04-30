@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/AppButton";
-import { Input } from "@/components/ui/AppInput";
-import { Label } from "@/components/ui/AppLabel";
+import { Button } from "@/components/ui/AppButton.tsx";
+import { Input } from "@/components/ui/AppInput.tsx";
+import { Label } from "@/components/ui/AppLabel.tsx";
 
 interface AuthViewProps {
   authStep: "NICK" | "LOGIN" | "SIGNUP";
