@@ -1,9 +1,9 @@
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, TrendingUp, BarChart3, MessageCircle, Users, Scale, ShieldAlert, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/AppButton";
-import { Textarea } from "@/components/ui/AppTextarea";
-import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/AppProgress";
+import { Button } from "@/components/ui/AppButton.tsx";
+import { Textarea } from "@/components/ui/AppTextarea.tsx";
+import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/AppProgress.tsx";
 import { CATEGORIES, SCALE_OPTIONS } from "../../constants";
 import { Category, Question } from "../../types";
 
