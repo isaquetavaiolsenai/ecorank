@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { Award, CheckCircle2, LogOut, User, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
 import { UserData } from "../../types";
 
 interface IntroViewProps {

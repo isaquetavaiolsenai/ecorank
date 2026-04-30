@@ -71,7 +71,15 @@ export default function App() {
   ];
 
   useEffect(() => {
-    console.log("App carregado. Versão:", (import.meta as any).env.VITE_BUILD_TIME);
+    const orKey = (import.meta as any).env.VITE_OPENROUTER_API_KEY;
+    console.log("EcoRank Inicializado.");
+    console.log("Provedor AI: OpenRouter (Gemini 2.0 Flash)");
+    console.log("OpenRouter Key presente:", !!orKey);
+    console.log("Build Time:", (import.meta as any).env.VITE_BUILD_TIME);
+    
+    if (!orKey) {
+      console.warn("ALERTA: VITE_OPENROUTER_API_KEY não encontrada. As funções de IA não funcionarão até que a chave seja configurada no ambiente.");
+    }
     // Check for saved session
     const savedUser = localStorage.getItem("ecorank_user_session");
     if (savedUser && !user) {
@@ -532,8 +540,13 @@ export default function App() {
       {(location.pathname === "/modulos" || location.pathname === "/ranking" || location.pathname === "/perfil") && (
         <>
           <BottomNav user={user} />
-          <div className="fixed bottom-2 left-2 text-[8px] text-white/10 pointer-events-none">
-            v: {(import.meta as any).env.VITE_BUILD_TIME}
+          <div className="fixed bottom-2 left-2 flex flex-col gap-0.5 pointer-events-none">
+            <div className="text-[8px] text-white/10">
+              v: {(import.meta as any).env.VITE_BUILD_TIME}
+            </div>
+            <div className="text-[8px] text-white/10 uppercase">
+              AI: OpenRouter
+            </div>
           </div>
         </>
       )}
