@@ -51,7 +51,7 @@
   }
 
   .app-container {
-    @apply w-full h-[100dvh] flex flex-col bg-black relative transition-all duration-500;
+    @apply w-full h-[100dvh] flex flex-col relative transition-all duration-500;
   }
 
   .safe-area-bottom {
@@ -63,7 +63,6 @@
   }
 }
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));

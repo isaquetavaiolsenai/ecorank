@@ -8,11 +8,12 @@ export default defineConfig(({mode}) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
     },
+    base: '/',
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
+        '@': path.resolve(process.cwd(), './src'),
       },
     },
     server: {
@@ -22,6 +23,7 @@ export default defineConfig(({mode}) => {
     },
     build: {
       outDir: 'dist',
+      emptyOutDir: true,
     },
   };
 });

@@ -14,7 +14,6 @@ import {
   AlertCircle
 } from "lucide-react";
 import { CATEGORIES, SCALE_OPTIONS } from "./constants";
-import { GoogleGenAI } from "@google/genai";
 import { supabase } from "./lib/supabase";
 import { ViewState, UserData, RankingEntry } from "./types";
 
@@ -27,9 +26,6 @@ import { ModuleSummaryView } from "./components/survey/ModuleSummaryView";
 import { RankingView } from "./components/ranking/RankingView";
 import { BottomNav } from "./components/layout/BottomNav";
 import { PublicProfileView } from "./components/profile/PublicProfileView";
-
-// AI Initialization
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 export default function App() {
   const navigate = useNavigate();
@@ -75,6 +71,7 @@ export default function App() {
   ];
 
   useEffect(() => {
+    console.log("App carregado. Versão:", (import.meta as any).env.VITE_BUILD_TIME);
     // Check for saved session
     const savedUser = localStorage.getItem("ecorank_user_session");
     if (savedUser && !user) {
@@ -108,7 +105,7 @@ export default function App() {
               currentPhase: data.current_phase,
               currentTask: data.current_task
             });
-            setView("PUBLIC_PROFILE");
+            navigate("/share");
           }
         });
     }
@@ -293,38 +290,90 @@ export default function App() {
     setView("MODULE_SUMMARY");
     navigate("/resumo");
     setIsLoadingFeedback(true);
+    setModuleFeedback(""); 
+    
     try {
       const cat = CATEGORIES.find(c => c.id === catId);
       const catAnswers = cat?.questions.map(q => `${q.text}: ${currentAnswers[q.id]}`).join("\n");
       
       const prompt = `
-        Aja como um mentor prático. Analise as respostas do usuário no módulo "${cat?.title}":
+        Aja como um mentor prático e direto para o sistema EcoRank. 
+        Analise estas respostas de um questionário corporativo sobre "${cat?.title}":
         ${catAnswers}
 
-        Dê um feedback rápido e amigável (máx 250 caracteres):
-        1. O que ele fez bem.
-        2. Qual resposta foi "irregular" ou automática demais (a que mais precisa de atenção).
-        3. Como agir melhor na próxima vez de forma simples.
-
-        Use linguagem direta e clara. Sem palavras difíceis ou muita formalidade.
+        Instruções:
+        1. Comece com uma frase de impacto em uma linha (máx 100 caracteres).
+        2. Depois, dê um feedback curto (máx 200 caracteres).
+        3. Destaque um ponto positivo e uma sugestão de melhoria real em tópicos curtos.
+        4. Use linguagem simples e motivadora.
       `;
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
+
+      const openRouterKey = (import.meta as any).env.VITE_OPENROUTER_API_KEY;
+      
+      if (!openRouterKey || openRouterKey === "" || openRouterKey === "undefined") {
+        throw new Error("OPENROUTER_API_KEY_MISSING");
+      }
+
+      console.log("Iniciando Eco-Insight via OpenRouter (gemini-2.0-flash)...");
+      
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${openRouterKey}`,
+          "HTTP-Referer": window.location.origin, // Optional, for OpenRouter rankings
+          "X-Title": "EcoRank AI", // Optional
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          "model": "google/gemini-2.0-flash-001",
+          "messages": [
+            { "role": "user", "content": prompt }
+          ]
+        })
       });
 
-      const feedbackText = response.text || "Ótimo trabalho!";
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || "Erro na API do OpenRouter");
+      }
+
+      const data = await response.json();
+      const feedbackText = data.choices[0]?.message?.content || "Ótimo trabalho! Continue evoluindo seu perfil.";
+      
+      console.log("Eco-Insight Recebido com sucesso.");
       setModuleFeedback(feedbackText);
 
+      // Sync to local and database
       setUser(prev => {
         if (!prev) return prev;
         const updatedTips = { ...(prev.tips || {}), [catId]: feedbackText };
         const localData = { tips: updatedTips, codigoVirtual: prev.codigoVirtual };
         localStorage.setItem(`ecorank_user_${prev.nick}`, JSON.stringify(localData));
+        
+        // Sync to Supabase - only update last_feedback as tips column doesn't exist
+        supabase.from('ecorank_users')
+          .update({ last_feedback: feedbackText })
+          .eq('nick', prev.nick)
+          .then(({ error }) => {
+            if (error) console.error("Erro ao sincronizar feedback com Supabase:", error);
+          });
+
         return { ...prev, tips: updatedTips };
       });
-    } catch (err) {
-      const fallbackFeedback = "Feedback salvo localmente. Continue para o próximo módulo.";
+    } catch (err: any) {
+      console.error("Erro API:", err);
+      let fallbackFeedback = "";
+      
+      const errorMessage = err?.message || String(err);
+      
+      if (errorMessage === "OPENROUTER_API_KEY_MISSING") {
+        fallbackFeedback = "### ⚠️ Chave OpenRouter Não Configurada\nAdicione VITE_OPENROUTER_API_KEY nas variáveis de ambiente.";
+      } else if (errorMessage.includes("quota") || errorMessage.includes("429")) {
+        fallbackFeedback = "### ⚠️ Limite da API Atingido\nSua chave atingiu o limite de requisições ou créditos no OpenRouter.";
+      } else {
+        fallbackFeedback = `### 💎 ECO-INSIGHT (MODO LOCAL)\nAnálise registrada localmente.\n\n*Status: ${errorMessage.substring(0, 50)}...*`;
+      }
+      
       setModuleFeedback(fallbackFeedback);
       
       setUser(prev => {
@@ -476,10 +525,17 @@ export default function App() {
               }} />
             ) : <Navigate to="/" />
           } />
+
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </AnimatePresence>
       {(location.pathname === "/modulos" || location.pathname === "/ranking" || location.pathname === "/perfil") && (
-        <BottomNav user={user} />
+        <>
+          <BottomNav user={user} />
+          <div className="fixed bottom-2 left-2 text-[8px] text-white/10 pointer-events-none">
+            v: {(import.meta as any).env.VITE_BUILD_TIME}
+          </div>
+        </>
       )}
     </div>
   );

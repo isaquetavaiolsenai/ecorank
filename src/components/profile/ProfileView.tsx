@@ -24,7 +24,7 @@ export const ProfileView = ({
   const [showQR, setShowQR] = useState(false);
   if (!user) return null;
 
-  const shareUrl = `${window.location.origin}${window.location.pathname}?share=${user.nick}`;
+  const shareUrl = `${window.location.origin}/share?share=${user.nick}`;
 
   return (
     <motion.div 

@@ -1,8 +1,9 @@
 import { motion } from "motion/react";
-import { Award, ChevronRight, Trophy, Lightbulb, CheckCircle2, TrendingUp, RefreshCcw } from "lucide-react";
+import { Award, ChevronRight, Trophy, Lightbulb, CheckCircle2, TrendingUp, RefreshCcw, Share2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Markdown from "react-markdown";
 import { Category } from "../../types";
+import { useState } from "react";
 
 interface ModuleSummaryProps {
   category: Category;
@@ -13,6 +14,7 @@ interface ModuleSummaryProps {
 }
 
 export const ModuleSummaryView = ({ category, moduleFeedback, isLoadingFeedback, onContinue, onRestart }: ModuleSummaryProps) => {
+  const [copied, setCopied] = useState(false);
   const categoryColors: Record<string, string> = {
     clima: "bg-pastel-yellow",
     comunicacao: "bg-pastel-blue",
@@ -22,6 +24,20 @@ export const ModuleSummaryView = ({ category, moduleFeedback, isLoadingFeedback,
   };
 
   const currentBg = categoryColors[category.id] || "bg-white";
+
+  const handleShare = () => {
+    const text = `EcoRank Insight [${category.title}]:\n\n${moduleFeedback}\n\nAnalise seu perfil em: ${window.location.origin}`;
+    if (navigator.share) {
+      navigator.share({
+        title: 'EcoRank Insight',
+        text: text,
+      }).catch(console.error);
+    } else {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
     <motion.div 
@@ -62,16 +78,36 @@ export const ModuleSummaryView = ({ category, moduleFeedback, isLoadingFeedback,
                   <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
                     <Lightbulb size={20} className="text-white/60" />
                   </div>
-                  {isLoadingFeedback ? (
-                    <div className="space-y-3">
-                      <div className="h-4 bg-white/10 rounded-full w-3/4 animate-pulse" />
-                      <div className="h-4 bg-white/10 rounded-full w-full animate-pulse" />
-                      <div className="h-4 bg-white/10 rounded-full w-2/3 animate-pulse" />
+                   {isLoadingFeedback || !moduleFeedback ? (
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-3">
+                        <Sparkles className="text-emerald-400 animate-spin" size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Sintonizando Frequência...</span>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="h-4 bg-white/10 rounded-full w-3/4 animate-pulse" />
+                        <div className="h-4 bg-white/10 rounded-full w-full animate-pulse" />
+                        <div className="h-4 bg-white/10 rounded-full w-2/3 animate-pulse" />
+                      </div>
                     </div>
                   ) : (
-                    <div className="markdown-body">
-                      <div className="text-2xl sm:text-3xl font-bold leading-tight tracking-tight italic">
-                        <Markdown>{moduleFeedback}</Markdown>
+                    <div className="space-y-6">
+                      <div className="flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                            <Sparkles className="text-emerald-400" size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">EcoRank AI Online</span>
+                         </div>
+                         <button 
+                          onClick={handleShare}
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-[9px] font-black uppercase tracking-widest text-white"
+                         >
+                          {copied ? 'Copiado!' : <><Share2 size={12} /> Partilhar</>}
+                         </button>
+                      </div>
+                      <div className="markdown-body">
+                        <div className="text-xl sm:text-2xl font-bold leading-tight tracking-tight italic text-white/90">
+                          <Markdown>{moduleFeedback}</Markdown>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -80,39 +116,45 @@ export const ModuleSummaryView = ({ category, moduleFeedback, isLoadingFeedback,
 
               <div className="grid grid-cols-2 gap-4">
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-white/90 backdrop-blur-xl p-6 rounded-[40px] border border-black/[0.03] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden relative group transition-all hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+                  className="bg-white/95 backdrop-blur-xl p-6 rounded-[40px] border border-black/[0.03] shadow-[0_15px_45px_rgb(0,0,0,0.1)] overflow-hidden relative group transition-all hover:shadow-[0_25px_60px_rgb(0,0,0,0.15)] hover:-translate-y-2"
                 >
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-green-500/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-green-500/20 transition-colors" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-black/20 mb-4">Seu Momento</p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-[20px] bg-green-500/5 flex items-center justify-center shadow-inner">
-                      <CheckCircle2 size={24} className="text-green-600" />
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/20 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-emerald-500/40 transition-colors" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600/70 mb-8 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Status
+                  </p>
+                  <div className="flex flex-col gap-5">
+                    <div className="w-16 h-16 rounded-[28px] bg-emerald-500/10 flex items-center justify-center shadow-inner group-hover:bg-emerald-500/20 transition-all duration-500 group-hover:rotate-6">
+                      <CheckCircle2 size={32} className="text-emerald-600" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[13px] font-black text-black uppercase tracking-tight leading-none mb-0.5">Mandou</span>
-                      <span className="text-[13px] font-black text-black uppercase tracking-tight leading-none">Bem</span>
+                      <span className="text-3xl font-black text-black uppercase tracking-tighter leading-[0.8] mb-1">Mandou</span>
+                      <span className="text-3xl font-black text-black uppercase tracking-tighter leading-[0.8] text-emerald-600">Bem</span>
                     </div>
                   </div>
                 </motion.div>
 
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-white/90 backdrop-blur-xl p-6 rounded-[40px] border border-black/[0.03] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden relative group transition-all hover:shadow-[0_20px_40px_rgb(0,0,0,0.06)] hover:-translate-y-1"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className="bg-white/95 backdrop-blur-xl p-6 rounded-[40px] border border-black/[0.03] shadow-[0_15px_45px_rgb(0,0,0,0.1)] overflow-hidden relative group transition-all hover:shadow-[0_25px_60px_rgb(0,0,0,0.15)] hover:-translate-y-2"
                 >
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-blue-500/20 transition-colors" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-black/20 mb-4">Seu Perfil</p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-[20px] bg-blue-500/5 flex items-center justify-center shadow-inner">
-                      <TrendingUp size={24} className="text-blue-600" />
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/20 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-blue-500/40 transition-colors" />
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600/70 mb-8 flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    Evolução
+                  </p>
+                  <div className="flex flex-col gap-5">
+                    <div className="w-16 h-16 rounded-[28px] bg-blue-500/10 flex items-center justify-center shadow-inner group-hover:bg-blue-500/20 transition-all duration-500 group-hover:-rotate-6">
+                      <TrendingUp size={32} className="text-blue-600" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[13px] font-black text-black uppercase tracking-tight leading-none mb-0.5">Perfil</span>
-                      <span className="text-[13px] font-black text-black uppercase tracking-tight leading-none">Engajado</span>
+                      <span className="text-3xl font-black text-black uppercase tracking-tighter leading-[0.8] mb-1">Perfil</span>
+                      <span className="text-3xl font-black text-black uppercase tracking-tighter leading-[0.8] text-blue-600">Ativo</span>
                     </div>
                   </div>
                 </motion.div>
@@ -121,20 +163,20 @@ export const ModuleSummaryView = ({ category, moduleFeedback, isLoadingFeedback,
         </main>
 
         {!isLoadingFeedback && (
-           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-md px-8 z-50 flex gap-3">
+           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-md px-8 z-50 flex items-stretch gap-4">
               <Button 
                 onClick={onRestart}
                 variant="outline"
-                className="h-20 w-20 rounded-full border-2 border-black/10 bg-white/50 backdrop-blur-md text-black hover:bg-black hover:text-white transition-all active:scale-90 flex items-center justify-center p-0"
-                title="Regenerar resposta"
+                className="h-20 w-20 rounded-[30px] border-2 border-black/5 bg-white/80 backdrop-blur-md text-black hover:bg-black hover:text-white transition-all active:scale-90 flex items-center justify-center p-0 shrink-0 shadow-xl"
+                title="Refazer este módulo"
               >
-                <RefreshCcw size={24} />
+                <RefreshCcw size={28} />
               </Button>
               <Button 
                 onClick={onContinue}
-                className="flex-1 h-20 rounded-full text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-black/20 transition-all active:scale-95 bg-black text-white hover:bg-stone-900 border-none flex items-center justify-center gap-2"
+                className="flex-1 h-20 rounded-[30px] text-xs font-black uppercase tracking-[0.25em] shadow-[0_15px_35px_rgba(0,0,0,0.25)] transition-all active:scale-95 bg-black text-white hover:bg-stone-900 border-none flex items-center justify-center gap-3"
               >
-                Confirmar Leitura <ChevronRight size={18} />
+                Continuar <ChevronRight size={20} />
               </Button>
            </div>
         )}
