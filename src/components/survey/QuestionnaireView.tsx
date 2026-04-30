@@ -1,7 +1,7 @@
 import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, TrendingUp, BarChart3, MessageCircle, Users, Scale, ShieldAlert, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/EcoButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress, ProgressIndicator, ProgressTrack } from "@/components/ui/progress";
 import { CATEGORIES, SCALE_OPTIONS } from "../../constants";
