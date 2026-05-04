@@ -53,20 +53,27 @@ export const RankingView = ({ user, ranking, handleLogout }: RankingViewProps) =
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.03 }}
-                    className={`flex items-center p-6 rounded-[32px] border ${entry.nick === user?.nick ? 'bg-stone-accent text-white shadow-[0_0_30px_rgba(3,85,63,0.4)] scale-[1.02] border-stone-accent/40 z-10' : 'bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10 transition-colors'}`}
+                    className={`flex items-start p-6 rounded-[32px] border gap-4 ${entry.nick === user?.nick ? 'bg-stone-accent text-white shadow-[0_0_30px_rgba(3,85,63,0.4)] scale-[1.02] border-stone-accent/40 z-10' : 'bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10 transition-colors'}`}
                   >
-                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-black mr-6 shrink-0 ${entry.nick === user?.nick ? 'bg-black text-stone-accent' : i < 3 ? 'bg-stone-accent/10 border border-stone-accent/20 text-stone-accent' : 'bg-white/5 text-foreground/40'}`}>
+                     <div className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-black shrink-0 ${entry.nick === user?.nick ? 'bg-black text-stone-accent' : i < 3 ? 'bg-stone-accent/10 border border-stone-accent/20 text-stone-accent shadow-sm' : 'bg-white/5 text-foreground/40'}`}>
                         {i + 1}
                      </div>
-                     <div className="flex-1 min-w-0">
-                        <p className="text-base font-extrabold tracking-tight truncate">@{entry.nick}</p>
-                        <p className={`text-[9px] font-bold uppercase tracking-widest ${entry.nick === user?.nick ? 'opacity-60' : 'opacity-40'}`}>
-                           Nível {Math.floor(entry.score / 100) + 1} • {entry.score > 200 ? 'Influenciador' : 'Colaborador'}
+                     
+                     <div className="flex-1 min-w-0 space-y-4">
+                        <div className="space-y-0.5">
+                           <p className="text-lg font-extrabold tracking-tight truncate leading-none">@{entry.nick}</p>
+                           <p className={`text-[8px] font-black uppercase tracking-[0.2em] ${entry.nick === user?.nick ? 'opacity-80' : 'opacity-40'}`}>
+                              Nível {Math.floor(entry.score / 100) + 1}
+                           </p>
+                        </div>
+                        <p className={`text-[9px] font-black uppercase tracking-[0.1em] ${entry.nick === user?.nick ? 'text-white' : 'text-stone-accent'}`}>
+                           {entry.score > 200 ? 'Influenciador' : 'Colaborador'}
                         </p>
                      </div>
-                     <div className="text-right shrink-0">
-                        <p className="text-2xl font-black tracking-tighter leading-none">{Number(entry.score).toFixed(2)}</p>
-                        <p className={`text-[8px] font-bold uppercase tracking-widest ${entry.nick === user?.nick ? 'opacity-60' : 'opacity-40'}`}>pts</p>
+
+                     <div className="text-right shrink-0 pt-0.5">
+                        <p className="text-4xl font-black tracking-tighter leading-none">{Math.floor(entry.score)}</p>
+                        <p className={`text-[9px] font-black uppercase tracking-widest mt-1 ${entry.nick === user?.nick ? 'opacity-60' : 'opacity-40'}`}>pts</p>
                      </div>
                   </motion.div>
                 ))}
