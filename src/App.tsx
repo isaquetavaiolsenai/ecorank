@@ -314,7 +314,8 @@ export default function App() {
 
       console.log("Iniciando Eco-Insight via Gemini API...");
       
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
@@ -442,7 +443,8 @@ export default function App() {
 
       console.log("Iniciando Diagnóstico Global via Gemini API...");
       
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
+      const ai = new GoogleGenAI({ apiKey });
       const result = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: prompt,
