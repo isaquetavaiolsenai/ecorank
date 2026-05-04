@@ -6,30 +6,34 @@
   --font-serif: "Playfair Display", serif;
   
   --color-stone-primary: #FFFFFF;
-  --color-stone-bg: #000000;
-  --color-stone-accent: #E1FF00;
-  --color-stone-border: #222222;
+  --color-stone-bg: #030405;
+  --color-stone-accent: #03553f;
+  --color-stone-border: #1A1C1E;
   
-  --color-background: #000000;
-  --color-foreground: #FFFFFF;
-  --color-border: #222222;
-  --color-ring: #ffffff;
-  --color-outline-ring: #ffffff;
+  --color-background: #030405;
+  --color-foreground: #F8FAFC;
+  --color-border: #1A1C1E;
+  --color-ring: #03553f;
+  --color-outline-ring: #03553f;
 
-  --color-pastel-yellow: #FEF3C7;
-  --color-pastel-pink: #FCE7F3;
-  --color-pastel-blue: #DBEAFE;
-  --color-pastel-purple: #F3E8FF;
+  --color-card-bg: #0A0C0E;
+  --color-card-muted: #131517;
+}
+
+@layer utilities {
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3column%3Efilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
 }
 
 @layer base {
   body {
-    @apply bg-black text-white antialiased overflow-hidden h-full;
+    @apply bg-background text-foreground antialiased;
     overscroll-behavior: none;
   }
   
   html {
-    @apply h-full overflow-hidden;
+    @apply h-full;
   }
   
   .scroller-hide::-webkit-scrollbar {
@@ -51,8 +55,19 @@
   }
 
   .app-container {
-    @apply w-full h-[100dvh] flex flex-col relative transition-all duration-500;
+    @apply w-full max-w-[500px] mx-auto min-h-screen flex flex-col relative transition-all duration-500 bg-background shadow-[0_0_100px_rgba(0,0,0,0.5)];
   }
+
+  /* Markdown Body Styles */
+  .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+    @apply font-black tracking-tight text-foreground mt-6 mb-4 leading-tight;
+  }
+  .markdown-body h2 { @apply text-lg uppercase tracking-widest text-stone-accent; }
+  .markdown-body p { @apply mb-4 text-foreground/80 leading-relaxed; }
+  .markdown-body ul { @apply list-none space-y-3 mb-6; }
+  .markdown-body li { @apply relative pl-0; }
+  .markdown-body strong { @apply text-foreground font-extrabold; }
+  .markdown-body blockquote { @apply border-l-4 border-stone-accent pl-4 italic text-foreground/70 my-6; }
 
   .safe-area-bottom {
     @apply pb-[env(safe-area-inset-bottom,32px)];

@@ -13,6 +13,7 @@ import {
   Award,
   AlertCircle
 } from "lucide-react";
+import { GoogleGenAI } from "@google/genai";
 import { CATEGORIES, SCALE_OPTIONS } from "./constants";
 import { supabase } from "./lib/supabase";
 import { ViewState, UserData, RankingEntry } from "./types";
@@ -71,15 +72,10 @@ export default function App() {
   ];
 
   useEffect(() => {
-    const orKey = (import.meta as any).env.VITE_OPENROUTER_API_KEY;
     console.log("EcoRank Inicializado.");
-    console.log("Provedor AI: OpenRouter (Gemini 2.0 Flash)");
-    console.log("OpenRouter Key presente:", !!orKey);
+    console.log("Provedor AI: Gemini 3 Flash");
     console.log("Build Time:", (import.meta as any).env.VITE_BUILD_TIME);
     
-    if (!orKey) {
-      console.warn("ALERTA: VITE_OPENROUTER_API_KEY não encontrada. As funções de IA não funcionarão até que a chave seja configurada no ambiente.");
-    }
     // Check for saved session
     const savedUser = localStorage.getItem("ecorank_user_session");
     if (savedUser && !user) {
@@ -269,7 +265,7 @@ export default function App() {
       currentTask: data.current_task || 1
     });
     setView("INTRO");
-    navigate("/modulos");
+    navigate("/");
   };
 
   const startModule = (index: number) => {
@@ -316,37 +312,15 @@ export default function App() {
         4. Use linguagem simples e motivadora.
       `;
 
-      const openRouterKey = (import.meta as any).env.VITE_OPENROUTER_API_KEY;
+      console.log("Iniciando Eco-Insight via Gemini API...");
       
-      if (!openRouterKey || openRouterKey === "" || openRouterKey === "undefined") {
-        throw new Error("OPENROUTER_API_KEY_MISSING");
-      }
-
-      console.log("Iniciando Eco-Insight via OpenRouter (gemini-2.0-flash)...");
-      
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${openRouterKey}`,
-          "HTTP-Referer": window.location.origin, // Optional, for OpenRouter rankings
-          "X-Title": "EcoRank AI", // Optional
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          "model": "google/gemini-2.0-flash-001",
-          "messages": [
-            { "role": "user", "content": prompt }
-          ]
-        })
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || "Erro na API do OpenRouter");
-      }
-
-      const data = await response.json();
-      const feedbackText = data.choices[0]?.message?.content || "Ótimo trabalho! Continue evoluindo seu perfil.";
+      const feedbackText = response.text || "Ótimo trabalho! Continue evoluindo seu perfil.";
       
       console.log("Eco-Insight Recebido com sucesso.");
       setModuleFeedback(feedbackText);
@@ -358,7 +332,7 @@ export default function App() {
         const localData = { tips: updatedTips, codigoVirtual: prev.codigoVirtual };
         localStorage.setItem(`ecorank_user_${prev.nick}`, JSON.stringify(localData));
         
-        // Sync to Supabase - only update last_feedback as tips column doesn't exist
+        // Sync to Supabase
         supabase.from('ecorank_users')
           .update({ last_feedback: feedbackText })
           .eq('nick', prev.nick)
@@ -374,10 +348,8 @@ export default function App() {
       
       const errorMessage = err?.message || String(err);
       
-      if (errorMessage === "OPENROUTER_API_KEY_MISSING") {
-        fallbackFeedback = "### ⚠️ Chave OpenRouter Não Configurada\nAdicione VITE_OPENROUTER_API_KEY nas variáveis de ambiente.";
-      } else if (errorMessage.includes("quota") || errorMessage.includes("429")) {
-        fallbackFeedback = "### ⚠️ Limite da API Atingido\nSua chave atingiu o limite de requisições ou créditos no OpenRouter.";
+      if (errorMessage.includes("quota") || errorMessage.includes("429")) {
+        fallbackFeedback = "### ⚠️ Limite da API Atingido\nSua chave atingiu o limite de requisições.";
       } else {
         fallbackFeedback = `### 💎 ECO-INSIGHT (MODO LOCAL)\nAnálise registrada localmente.\n\n*Status: ${errorMessage.substring(0, 50)}...*`;
       }
@@ -404,8 +376,9 @@ export default function App() {
       setView("QUESTIONNAIRE");
       navigate("/questionario");
     } else {
-      setView("INTRO");
-      navigate("/modulos");
+      // Completed the entire journey
+      setView("PROFILE");
+      navigate("/perfil?new_diagnosis=true");
     }
   };
 
@@ -427,13 +400,56 @@ export default function App() {
   };
 
   const submitSurvey = async (finalAnswers: Record<string, number | string>) => {
-    const score = Object.values(finalAnswers).reduce((acc: number, v) => typeof v === 'number' ? acc + v : acc, 0) as number;
     setIsLoadingFeedback(true);
-    setView("INTRO");
-    navigate("/modulos");
+    setView("MODULE_SUMMARY");
+    navigate("/resumo");
     
     try {
-      const feedback = "Diagnóstico concluído com sucesso!";
+      const score = Object.values(finalAnswers).reduce((acc: number, v) => typeof v === 'number' ? acc + v : acc, 0) as number;
+      
+      const allAnswersText = CATEGORIES.map(cat => {
+        const catAnswers = cat.questions.map(q => `${q.text}: ${finalAnswers[q.id] || "Não respondida"}`).join("\n");
+        return `### ${cat.title}\n${catAnswers}`;
+      }).join("\n\n");
+
+      const prompt = `
+        Aja como um Auditor Chefe de ESG e Cultura Organizacional. 
+        Analise as respostas do usuário para gerar um "Relatório de Feedback Profissional".
+        
+        IMPORTANTE: O relatório deve seguir EXATAMENTE este formato, sem introduções ou conclusões extras. 
+        Use markdown conforme o modelo abaixo:
+
+        **Relatório de Feedback Profissional**
+        
+        **Perfil:** [Dê um nome criativo ao perfil, ex: Gestor de Equidade e Estabilidade]
+        
+        🟢 **Pontos Fortes**
+        * **[Ponto Forte 1]:** [Descrição breve e profissional baseada nas respostas]
+        * **[Ponto Forte 2]:** [Descrição breve e profissional baseada nas respostas]
+
+        🔴 **Pontos de Melhoria**
+        * **[Ponto de Melhoria 1]:** [Descrição clara do que melhorar baseado nas fraquezas]
+        * **[Ponto de Melhoria 2]:** [Descrição clara do que melhorar baseado nas fraquezas]
+
+        📝 **Conclusão**
+        [Um parágrafo final curto (2-3 frases) sobre a base ética do usuário e o próximo passo recomendado para sua evolução profissional.]
+
+        Dados para análise:
+        Pontuação Total: ${score} (Sendo 0 péssimo e 240 excelente)
+        Respostas do Candidato:
+        ${allAnswersText}
+      `;
+
+      console.log("Iniciando Diagnóstico Global via Gemini API...");
+      
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const result = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+      });
+
+      const feedback = result.text || "Diagnóstico concluído com sucesso!";
+      setModuleFeedback(feedback);
 
       await supabase.from('ecorank_users').update({ 
         score, completed: true, last_feedback: feedback, codigo_virtual: user?.codigoVirtual 
@@ -448,8 +464,11 @@ export default function App() {
           lastFeedback: feedback 
         } as UserData;
       });
-    } catch (err) {
-      console.error(err);
+      
+      console.log("Diagnóstico Global concluído.");
+    } catch (err: any) {
+      console.error("Erro no diagnóstico final:", err);
+      setModuleFeedback(`### ⚠️ Erro ao gerar diagnóstico AI\nSeus dados foram salvos, mas a análise falhou: ${err.message}`);
     } finally {
       setIsLoadingFeedback(false);
     }
@@ -459,11 +478,12 @@ export default function App() {
   const isPublicProfile = location.pathname.startsWith("/share") || location.search.includes("share");
 
   return (
-    <div className="w-full bg-[#000000] h-[100dvh] overflow-hidden">
+    <div className="w-full min-h-screen bg-[#000000]">
       <AnimatePresence mode="wait">
+
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={
-            user ? <Navigate to="/modulos" /> : (
+            !user ? (
               <AuthView 
                 authStep={authStep} nick={nick} setNick={setNick}
                 password={password} setPassword={setPassword}
@@ -471,11 +491,7 @@ export default function App() {
                 handleCheckNick={handleCheckNick} handleAuth={handleAuth}
                 setAuthStep={setAuthStep}
               />
-            )
-          } />
-          
-          <Route path="/modulos" element={
-            !user ? <Navigate to="/" /> : (
+            ) : (
               <IntroView 
                 user={user} handleLogout={handleLogout} modules={modules}
                 isCategoryDone={isCategoryDone} startModule={startModule}
@@ -505,6 +521,7 @@ export default function App() {
             !user ? <Navigate to="/" /> : (
               <ModuleSummaryView 
                 category={CATEGORIES[currentCategoryIndex]}
+                nextCategory={CATEGORIES[currentCategoryIndex + 1]}
                 moduleFeedback={moduleFeedback}
                 isLoadingFeedback={isLoadingFeedback}
                 onContinue={nextModule}
@@ -525,19 +542,12 @@ export default function App() {
             )
           } />
 
-          <Route path="/share" element={
-            publicProfileData ? (
-              <PublicProfileView data={publicProfileData} onClose={() => {
-                setPublicProfileData(null);
-                navigate("/");
-              }} />
-            ) : <Navigate to="/" />
-          } />
+          <Route path="/p/:nick" element={<PublicProfileView />} />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </AnimatePresence>
-      {(location.pathname === "/modulos" || location.pathname === "/ranking" || location.pathname === "/perfil") && (
+      {(location.pathname === "/" || location.pathname === "/ranking" || location.pathname === "/perfil") && (
         <>
           <BottomNav user={user} />
           <div className="fixed bottom-2 left-2 flex flex-col gap-0.5 pointer-events-none">
@@ -545,7 +555,7 @@ export default function App() {
               v: {(import.meta as any).env.VITE_BUILD_TIME}
             </div>
             <div className="text-[8px] text-white/10 uppercase">
-              AI: OpenRouter
+              AI: Gemini 3 Flash
             </div>
           </div>
         </>

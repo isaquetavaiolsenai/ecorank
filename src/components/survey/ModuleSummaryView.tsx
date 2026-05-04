@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { Award, ChevronRight, Trophy, Lightbulb, CheckCircle2, TrendingUp, RefreshCcw, Share2, Sparkles } from "lucide-react";
+import { Award, ChevronRight, Trophy, Lightbulb, CheckCircle2, TrendingUp, RefreshCcw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/AppButton.tsx";
 import Markdown from "react-markdown";
 import { Category } from "../../types";
@@ -7,14 +7,14 @@ import { useState } from "react";
 
 interface ModuleSummaryProps {
   category: Category;
+  nextCategory?: Category;
   moduleFeedback: string;
   isLoadingFeedback: boolean;
   onContinue: () => void;
   onRestart: () => void;
 }
 
-export const ModuleSummaryView = ({ category, moduleFeedback, isLoadingFeedback, onContinue, onRestart }: ModuleSummaryProps) => {
-  const [copied, setCopied] = useState(false);
+export const ModuleSummaryView = ({ category, nextCategory, moduleFeedback, isLoadingFeedback, onContinue, onRestart }: ModuleSummaryProps) => {
   const categoryColors: Record<string, string> = {
     clima: "bg-pastel-yellow",
     comunicacao: "bg-pastel-blue",
@@ -25,161 +25,87 @@ export const ModuleSummaryView = ({ category, moduleFeedback, isLoadingFeedback,
 
   const currentBg = categoryColors[category.id] || "bg-white";
 
-  const handleShare = () => {
-    const text = `EcoRank Insight [${category.title}]:\n\n${moduleFeedback}\n\nAnalise seu perfil em: ${window.location.origin}`;
-    if (navigator.share) {
-      navigator.share({
-        title: 'EcoRank Insight',
-        text: text,
-      }).catch(console.error);
-    } else {
-      navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   return (
     <motion.div 
       key="view-module-summary"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="w-full h-full bg-[#000000]"
+      className="w-full min-h-screen bg-background"
     >
-      <div className={`app-container overflow-hidden flex flex-col ${currentBg}`}>
-        <header className="px-8 pt-safe pb-4 flex justify-between items-center">
+      <div className="app-container flex flex-col bg-background relative">
+        <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
+        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-stone-accent/[0.03] to-transparent pointer-events-none" />
+        
+        <header className="px-8 pt-safe pb-4 flex justify-between items-center relative z-10 border-b border-white/5">
            <div className="pt-6 flex justify-between items-center w-full">
              <div className="space-y-1">
-                <h1 className="text-2xl font-black tracking-tight text-black">Impacto Detetado</h1>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-black/40">{category.title}</p>
+                <h1 className="text-2xl font-black tracking-tight text-foreground">Impacto Detetado</h1>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-stone-accent">{category.title}</p>
              </div>
-             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-black/5">
-                <Trophy size={20} className="text-black" />
+             <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/5 border border-white/10">
+                <Trophy size={20} className="text-stone-accent" />
              </div>
            </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto scroller-hide px-8 pb-32 max-w-4xl mx-auto w-full">
-           <div className="space-y-12 mt-12">
+        <main className="px-8 pb-12 max-w-4xl mx-auto w-full relative z-10">
+           <div className="space-y-12 mt-12 pb-48">
               <div className="flex items-center gap-4">
-                 <div className="p-4 rounded-3xl bg-black text-white">
+                 <div className="p-4 rounded-3xl bg-stone-accent text-white shadow-[0_0_20px_rgba(3,85,63,0.3)]">
                     <Award size={24} />
                  </div>
                  <div>
-                    <h3 className="text-xl font-extrabold tracking-tight text-black">Visão Universal</h3>
-                    <p className="text-xs font-medium text-black/40">Sintonizado pelo EcoRank AI</p>
+                    <h3 className="text-xl font-extrabold tracking-tight text-foreground">Visão Universal</h3>
+                    <p className="text-xs font-medium text-foreground/40">Sintonizado pelo EcoRank AI</p>
                  </div>
               </div>
 
-              <div className="bg-black text-white p-10 rounded-[40px] shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+              <div className="bg-card-bg border border-white/10 text-foreground p-6 sm:p-10 rounded-[40px] shadow-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-stone-accent/[0.03] rounded-full -mr-32 -mt-32 blur-[80px]" />
                 <div className="relative z-10 space-y-6">
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                    <Lightbulb size={20} className="text-white/60" />
+                  <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                    <Lightbulb size={20} className="text-stone-accent" />
                   </div>
                    {isLoadingFeedback || !moduleFeedback ? (
                     <div className="space-y-6">
                       <div className="flex items-center gap-3">
-                        <Sparkles className="text-emerald-400 animate-spin" size={16} />
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Sintonizando Frequência...</span>
+                        <Sparkles className="text-stone-accent animate-pulse" size={16} />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-foreground/40">Sintonizando Frequência...</span>
                       </div>
                       <div className="space-y-3">
-                        <div className="h-4 bg-white/10 rounded-full w-3/4 animate-pulse" />
-                        <div className="h-4 bg-white/10 rounded-full w-full animate-pulse" />
-                        <div className="h-4 bg-white/10 rounded-full w-2/3 animate-pulse" />
+                        <div className="h-4 bg-white/5 rounded-full w-3/4 animate-pulse" />
+                        <div className="h-4 bg-white/5 rounded-full w-full animate-pulse" />
+                        <div className="h-4 bg-white/5 rounded-full w-2/3 animate-pulse" />
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      <div className="flex items-center justify-between">
-                         <div className="flex items-center gap-3">
-                            <Sparkles className="text-emerald-400" size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-400">EcoRank AI Online</span>
-                         </div>
-                         <button 
-                          onClick={handleShare}
-                          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-[9px] font-black uppercase tracking-widest text-white"
-                         >
-                          {copied ? 'Copiado!' : <><Share2 size={12} /> Partilhar</>}
-                         </button>
-                      </div>
                       <div className="markdown-body">
-                        <div className="text-xl sm:text-2xl font-bold leading-tight tracking-tight italic text-white/90">
-                          <Markdown>{moduleFeedback}</Markdown>
-                        </div>
+                        <Markdown>{moduleFeedback}</Markdown>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-                  className="bg-white/95 backdrop-blur-xl p-6 rounded-[40px] border border-black/[0.03] shadow-[0_15px_45px_rgb(0,0,0,0.1)] overflow-hidden relative group transition-all hover:shadow-[0_25px_60px_rgb(0,0,0,0.15)] hover:-translate-y-2"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/20 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-emerald-500/40 transition-colors" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-600/70 mb-8 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Status
-                  </p>
-                  <div className="flex flex-col gap-5">
-                    <div className="w-16 h-16 rounded-[28px] bg-emerald-500/10 flex items-center justify-center shadow-inner group-hover:bg-emerald-500/20 transition-all duration-500 group-hover:rotate-6">
-                      <CheckCircle2 size={32} className="text-emerald-600" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-3xl font-black text-black uppercase tracking-tighter leading-[0.8] mb-1">Mandou</span>
-                      <span className="text-3xl font-black text-black uppercase tracking-tighter leading-[0.8] text-emerald-600">Bem</span>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                  className="bg-white/95 backdrop-blur-xl p-6 rounded-[40px] border border-black/[0.03] shadow-[0_15px_45px_rgb(0,0,0,0.1)] overflow-hidden relative group transition-all hover:shadow-[0_25px_60px_rgb(0,0,0,0.15)] hover:-translate-y-2"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/20 rounded-full -mr-12 -mt-12 blur-2xl group-hover:bg-blue-500/40 transition-colors" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-600/70 mb-8 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                    Evolução
-                  </p>
-                  <div className="flex flex-col gap-5">
-                    <div className="w-16 h-16 rounded-[28px] bg-blue-500/10 flex items-center justify-center shadow-inner group-hover:bg-blue-500/20 transition-all duration-500 group-hover:-rotate-6">
-                      <TrendingUp size={32} className="text-blue-600" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-3xl font-black text-black uppercase tracking-tighter leading-[0.8] mb-1">Perfil</span>
-                      <span className="text-3xl font-black text-black uppercase tracking-tighter leading-[0.8] text-blue-600">Ativo</span>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-           </div>
-        </main>
+            </div>
+         </main>
 
         {!isLoadingFeedback && (
-           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-md px-8 z-50 flex items-stretch gap-4">
-              <Button 
-                onClick={onRestart}
-                variant="outline"
-                className="h-20 w-20 rounded-[30px] border-2 border-black/5 bg-white/80 backdrop-blur-md text-black hover:bg-black hover:text-white transition-all active:scale-90 flex items-center justify-center p-0 shrink-0 shadow-xl"
-                title="Refazer este módulo"
-              >
-                <RefreshCcw size={28} />
-              </Button>
+           <div className="fixed bottom-10 left-1/2 -translate-x-1/2 w-full max-w-[500px] px-8 z-50 flex items-stretch gap-4">
               <Button 
                 onClick={onContinue}
-                className="flex-1 h-20 rounded-[30px] text-xs font-black uppercase tracking-[0.25em] shadow-[0_15px_35px_rgba(0,0,0,0.25)] transition-all active:scale-95 bg-black text-white hover:bg-stone-900 border-none flex items-center justify-center gap-3"
+                className="flex-1 h-20 rounded-[30px] text-[11px] font-black uppercase tracking-[0.2em] shadow-[0_15px_35px_rgba(3,85,63,0.2)] transition-all active:scale-95 bg-stone-accent text-white hover:bg-stone-accent/90 border-none flex items-center justify-center gap-3 whitespace-normal leading-tight px-6 text-center"
               >
-                Continuar <ChevronRight size={20} />
+                <div className="flex items-center gap-2">
+                  <span>{nextCategory ? 'PRÓXIMO' : 'FINALIZAR JORNADA'}</span>
+                  <ChevronRight size={20} className="shrink-0" />
+                </div>
               </Button>
            </div>
         )}
+
       </div>
     </motion.div>
   );

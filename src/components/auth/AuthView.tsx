@@ -40,13 +40,13 @@ export const AuthView = ({
       <div className="app-container overflow-hidden flex flex-col bg-black text-white">
         <div className="flex-1 px-8 flex flex-col justify-center space-y-10">
           <header className="space-y-4">
-            <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center transform -rotate-12 mb-6">
-               <TrendingUp size={24} className="text-black" />
+            <div className="w-12 h-12 rounded-full bg-stone-accent flex items-center justify-center transform -rotate-12 mb-6 shadow-[0_0_20px_rgba(3,85,63,0.4)]">
+               <TrendingUp size={24} className="text-white" />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tighter leading-none">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tighter leading-none text-foreground">
               {authStep === "NICK" ? "Bem-vindo ao EcoRank" : "Identifique sua Conta"}
             </h1>
-            <p className="text-white/40 text-sm font-medium leading-relaxed">
+            <p className="text-foreground/40 text-sm font-medium leading-relaxed">
               A plataforma definitiva para diagnósticos de cultura e ESG 2026.
             </p>
           </header>
@@ -62,11 +62,11 @@ export const AuthView = ({
                 className="space-y-6"
               >
                 <div className="space-y-3">
-                  <Label htmlFor="nick" className="text-[10px] font-bold uppercase tracking-[0.3em] text-white/40 ml-1">Nickname</Label>
+                   <Label htmlFor="nick" className="text-[10px] font-bold uppercase tracking-[0.3em] text-foreground/40 ml-1">Nickname</Label>
                   <Input 
                     id="nick" 
                     placeholder="seu_nome" 
-                    className="h-16 px-6 bg-white/5 border-white/10 focus:bg-white/10 transition-all rounded-full text-base font-medium placeholder:text-white/10"
+                    className="h-16 px-6 bg-white/5 border-white/10 focus:border-stone-accent/50 focus:bg-white/10 transition-all rounded-full text-base font-medium placeholder:text-white/10"
                     value={nick}
                     onChange={e => setNick(e.target.value)}
                     required
@@ -78,7 +78,7 @@ export const AuthView = ({
                 <Button 
                   type="submit" 
                   disabled={isCheckingNick}
-                  className="w-full h-16 bg-white text-black text-[11px] font-extrabold uppercase tracking-[0.2em] rounded-full shadow-2xl hover:bg-white/90 transition-all border-none"
+                  className="w-full h-16 bg-stone-accent text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-full shadow-2xl hover:bg-stone-accent/90 transition-all border-none"
                 >
                   {isCheckingNick ? "Validando..." : "Continuar"}
                 </Button>
@@ -96,19 +96,19 @@ export const AuthView = ({
               >
                 <div className="bg-white/5 p-6 rounded-[32px] border border-white/10 space-y-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-white text-black flex items-center justify-center font-black">
+                    <div className="w-12 h-12 rounded-full bg-stone-accent text-white flex items-center justify-center font-black">
                       {nick.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-bold">@{nick}</p>
-                      <p className="text-[10px] font-medium text-white/40 uppercase tracking-widest leading-none">
+                      <p className="text-sm font-bold text-foreground">@{nick}</p>
+                      <p className="text-[10px] font-medium text-foreground/40 uppercase tracking-widest leading-none">
                         {authStep === "LOGIN" ? "Login Requirido" : "Novo Cadastro"}
                       </p>
                     </div>
                     <button 
                       type="button"
                       onClick={() => setAuthStep("NICK")}
-                      className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"
+                      className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors text-foreground"
                     >
                       <ArrowLeft size={14} />
                     </button>
@@ -118,7 +118,7 @@ export const AuthView = ({
                     <Input 
                       type="password" 
                       placeholder="Senha" 
-                      className="h-14 px-6 bg-white/10 border-transparent focus:border-white/20 transition-all rounded-2xl text-sm"
+                      className="h-14 px-6 bg-white/10 border-transparent focus:border-stone-accent/30 transition-all rounded-2xl text-sm"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       required
@@ -132,7 +132,7 @@ export const AuthView = ({
 
                 <Button 
                   type="submit" 
-                  className="w-full h-16 bg-white text-black text-[11px] font-extrabold uppercase tracking-[0.2em] rounded-full shadow-2xl hover:bg-white/90 transition-all border-none"
+                  className="w-full h-16 bg-stone-accent text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-full shadow-2xl hover:bg-stone-accent/90 transition-all border-none"
                 >
                   {authStep === "LOGIN" ? "Entrar na Conta" : "Criar Minha Conta"}
                 </Button>

@@ -9,6 +9,7 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss()],
     define: {
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
+      'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
     },
     base: '/',
     resolve: {
@@ -24,6 +25,15 @@ export default defineConfig(({mode}) => {
     build: {
       outDir: 'dist',
       emptyOutDir: true,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom', 'motion'],
+            ai: ['@google/genai'],
+          },
+        },
+      },
+      chunkSizeWarningLimit: 1000,
     },
   };
 });
