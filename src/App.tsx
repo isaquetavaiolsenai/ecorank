@@ -315,9 +315,10 @@ export default function App() {
       console.log("Iniciando Eco-Insight via Gemini API...");
       
       const apiKey = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
+      const modelName = process.env.VITE_GEMINI_MODEL || (import.meta.env.VITE_GEMINI_MODEL as string) || "gemini-1.5-flash";
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: modelName,
         contents: prompt,
       });
 
@@ -557,11 +558,15 @@ export default function App() {
               v: {(import.meta as any).env.VITE_BUILD_TIME}
             </div>
             <div className="text-[8px] text-white/10 uppercase">
-              AI: Gemini 3 Flash
+              AI: {process.env.VITE_GEMINI_MODEL || (import.meta.env.VITE_GEMINI_MODEL as string) || "Gemini 1.5 Flash"}
             </div>
           </div>
         </>
       )}
+    </div>
+  );
+}
+}
     </div>
   );
 }

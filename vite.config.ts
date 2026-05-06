@@ -10,6 +10,7 @@ export default defineConfig(({mode}) => {
     define: {
       'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
       'process.env.GEMINI_API_KEY': JSON.stringify(process.env.GEMINI_API_KEY),
+      'process.env.VITE_GEMINI_MODEL': JSON.stringify(process.env.VITE_GEMINI_MODEL),
     },
     base: '/',
     resolve: {
