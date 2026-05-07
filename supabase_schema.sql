@@ -27,3 +27,19 @@ CREATE POLICY "Acesso Público" ON public.ecorank_users
     FOR ALL
     USING (true)
     WITH CHECK (true);
+
+-- Tabela simples para configurações globais (ex: chave da API do Gemini)
+CREATE TABLE IF NOT EXISTS public.ecorank_config (
+    id INT PRIMARY KEY DEFAULT 1,
+    gemini_token TEXT
+);
+
+-- Ativar RLS, mas permitir acesso público por ser temporário
+ALTER TABLE public.ecorank_config ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Acesso Público Config" ON public.ecorank_config;
+CREATE POLICY "Acesso Público Config" ON public.ecorank_config
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
