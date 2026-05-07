@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence } from "motion/react";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
-import { 
-  Users, 
-  MessageCircle, 
-  UserPlus, 
-  Scale, 
+import {
+  Users,
+  MessageCircle,
+  UserPlus,
+  Scale,
   ShieldAlert,
   BarChart3,
   MessageSquare,
@@ -27,6 +27,7 @@ import { ModuleSummaryView } from "./components/survey/ModuleSummaryView";
 import { RankingView } from "./components/ranking/RankingView";
 import { BottomNav } from "./components/layout/BottomNav";
 import { PublicProfileView } from "./components/profile/PublicProfileView";
+import { UpdateTokenView } from "./components/admin/UpdateTokenView";
 
 export default function App() {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [isCheckingNick, setIsCheckingNick] = useState(false);
-  
+
   // Questionnaire state
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -75,7 +76,7 @@ export default function App() {
     console.log("EcoRank Inicializado.");
     console.log("Provedor AI: Gemini 3 Flash");
     console.log("Build Time:", (import.meta as any).env.VITE_BUILD_TIME);
-    
+
     // Check for saved session
     const savedUser = localStorage.getItem("ecorank_user_session");
     if (savedUser && !user) {
@@ -128,7 +129,7 @@ export default function App() {
         .from('ecorank_users')
         .select('nick, score')
         .order('score', { ascending: false });
-        
+
       if (error) throw error;
       if (data) setRanking(data as RankingEntry[]);
     } catch (err) {
@@ -232,12 +233,12 @@ export default function App() {
     localStorage.setItem("ecorank_user_session", JSON.stringify({ nick: data.nick }));
     const localDataRaw = localStorage.getItem(`ecorank_user_${data.nick}`);
     const defaultCode = `#${Math.floor(Math.random() * 900000) + 100000}`;
-    
+
     let localData = localDataRaw ? JSON.parse(localDataRaw) : { tips: {} };
-    
+
     // Ensure codigoVirtual is present, prioritizing DB > Local > Default
     const finalCode = data.codigo_virtual || localData.codigoVirtual || defaultCode;
-    
+
     // Cache it locally
     localData.codigoVirtual = finalCode;
     localStorage.setItem(`ecorank_user_${data.nick}`, JSON.stringify(localData));
@@ -294,12 +295,12 @@ export default function App() {
     setView("MODULE_SUMMARY");
     navigate("/resumo");
     setIsLoadingFeedback(true);
-    setModuleFeedback(""); 
-    
+    setModuleFeedback("");
+
     try {
       const cat = CATEGORIES.find(c => c.id === catId);
       const catAnswers = cat?.questions.map(q => `${q.text}: ${currentAnswers[q.id]}`).join("\n");
-      
+
       const prompt = `
         Aja como um mentor prático e direto para o sistema EcoRank. 
         Analise estas respostas de um questionário corporativo sobre "${cat?.title}":
@@ -313,9 +314,19 @@ export default function App() {
       `;
 
       console.log("Iniciando Eco-Insight via Gemini API...");
+
+      let apiKey = process.env.VITE_GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
+      try {
+        const { data } = await supabase.from('ecorank_config').select('gemini_token').eq('id', 1).maybeSingle();
+        if (data?.gemini_token) apiKey = data.gemini_token;
+      } catch (e) {
+        console.error("Erro ao buscar token do banco de dados:", e);
+      }
       
-      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
-      const modelName = process.env.VITE_GEMINI_MODEL || (import.meta.env.VITE_GEMINI_MODEL as string) || "gemini-1.5-flash";
+      const modelName = process.env.VITE_GEMINI_MODEL || (import.meta.env.VITE_GEMINI_MODEL as string) || "gemini-2.5-flash";
+      
+      if (!apiKey) throw new Error("API Key do Gemini não configurada!");
+
       const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: modelName,
@@ -323,7 +334,7 @@ export default function App() {
       });
 
       const feedbackText = response.text || "Ótimo trabalho! Continue evoluindo seu perfil.";
-      
+
       console.log("Eco-Insight Recebido com sucesso.");
       setModuleFeedback(feedbackText);
 
@@ -333,7 +344,7 @@ export default function App() {
         const updatedTips = { ...(prev.tips || {}), [catId]: feedbackText };
         const localData = { tips: updatedTips, codigoVirtual: prev.codigoVirtual };
         localStorage.setItem(`ecorank_user_${prev.nick}`, JSON.stringify(localData));
-        
+
         // Sync to Supabase
         supabase.from('ecorank_users')
           .update({ last_feedback: feedbackText })
@@ -347,17 +358,17 @@ export default function App() {
     } catch (err: any) {
       console.error("Erro API:", err);
       let fallbackFeedback = "";
-      
+
       const errorMessage = err?.message || String(err);
-      
+
       if (errorMessage.includes("quota") || errorMessage.includes("429")) {
         fallbackFeedback = "### ⚠️ Limite da API Atingido\nSua chave atingiu o limite de requisições.";
       } else {
         fallbackFeedback = `### 💎 ECO-INSIGHT (MODO LOCAL)\nAnálise registrada localmente.\n\n*Status: ${errorMessage.substring(0, 50)}...*`;
       }
-      
+
       setModuleFeedback(fallbackFeedback);
-      
+
       setUser(prev => {
         if (!prev) return prev;
         const updatedTips = { ...(prev.tips || {}), [catId]: fallbackFeedback };
@@ -392,7 +403,7 @@ export default function App() {
       delete newAnswers[q.id];
     });
     setAnswers(newAnswers);
-    
+
     // Reset indices
     setCurrentQuestionIndex(0);
     setIsModuleStart(true);
@@ -405,10 +416,10 @@ export default function App() {
     setIsLoadingFeedback(true);
     setView("MODULE_SUMMARY");
     navigate("/resumo");
-    
+
     try {
       const score = Object.values(finalAnswers).reduce((acc: number, v) => typeof v === 'number' ? acc + v : acc, 0) as number;
-      
+
       const allAnswersText = CATEGORIES.map(cat => {
         const catAnswers = cat.questions.map(q => `${q.text}: ${finalAnswers[q.id] || "Não respondida"}`).join("\n");
         return `### ${cat.title}\n${catAnswers}`;
@@ -443,31 +454,42 @@ export default function App() {
       `;
 
       console.log("Iniciando Diagnóstico Global via Gemini API...");
-      
-      const apiKey = process.env.GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
+
+      let apiKey = process.env.VITE_GEMINI_API_KEY || (import.meta.env.VITE_GEMINI_API_KEY as string);
+      try {
+        const { data } = await supabase.from('ecorank_config').select('gemini_token').eq('id', 1).maybeSingle();
+        if (data?.gemini_token) apiKey = data.gemini_token;
+      } catch (e) {
+        console.error("Erro ao buscar token do banco de dados:", e);
+      }
+
+      const modelName = process.env.VITE_GEMINI_MODEL || (import.meta.env.VITE_GEMINI_MODEL as string) || "gemini-2.5-flash";
+
+      if (!apiKey) throw new Error("API Key do Gemini não configurada!");
+
       const ai = new GoogleGenAI({ apiKey });
       const result = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: modelName,
         contents: prompt,
       });
 
       const feedback = result.text || "Diagnóstico concluído com sucesso!";
       setModuleFeedback(feedback);
 
-      await supabase.from('ecorank_users').update({ 
-        score, completed: true, last_feedback: feedback, codigo_virtual: user?.codigoVirtual 
+      await supabase.from('ecorank_users').update({
+        score, completed: true, last_feedback: feedback, codigo_virtual: user?.codigoVirtual
       }).eq('nick', user?.nick);
 
       setUser(prev => {
         if (!prev) return null;
-        return { 
-          ...prev, 
-          score: score, 
-          completed: true, 
-          lastFeedback: feedback 
+        return {
+          ...prev,
+          score: score,
+          completed: true,
+          lastFeedback: feedback
         } as UserData;
       });
-      
+
       console.log("Diagnóstico Global concluído.");
     } catch (err: any) {
       console.error("Erro no diagnóstico final:", err);
@@ -487,7 +509,7 @@ export default function App() {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={
             !user ? (
-              <AuthView 
+              <AuthView
                 authStep={authStep} nick={nick} setNick={setNick}
                 password={password} setPassword={setPassword}
                 authError={authError} isCheckingNick={isCheckingNick}
@@ -495,7 +517,7 @@ export default function App() {
                 setAuthStep={setAuthStep}
               />
             ) : (
-              <IntroView 
+              <IntroView
                 user={user} handleLogout={handleLogout} modules={modules}
                 isCategoryDone={isCategoryDone} startModule={startModule}
                 allDone={allDone} submitSurvey={submitSurvey} answers={answers}
@@ -505,7 +527,7 @@ export default function App() {
 
           <Route path="/questionario" element={
             !user ? <Navigate to="/" /> : (
-              <QuestionnaireView 
+              <QuestionnaireView
                 currentCategoryIndex={currentCategoryIndex}
                 currentQuestionIndex={currentQuestionIndex}
                 isModuleStart={isModuleStart}
@@ -522,7 +544,7 @@ export default function App() {
 
           <Route path="/resumo" element={
             !user ? <Navigate to="/" /> : (
-              <ModuleSummaryView 
+              <ModuleSummaryView
                 category={CATEGORIES[currentCategoryIndex]}
                 nextCategory={CATEGORIES[currentCategoryIndex + 1]}
                 moduleFeedback={moduleFeedback}
@@ -546,6 +568,8 @@ export default function App() {
           } />
 
           <Route path="/p/:nick" element={<PublicProfileView />} />
+          
+          <Route path="/token" element={<UpdateTokenView />} />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
